@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.env
+node_modules/
+.agents/
+.claude/
+*.pkl
+*.h5
+*.pt
+*.pth
+venv/
+.venv/
+nul

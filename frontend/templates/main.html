@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>วิเคราะห์อารมณ์จากใบหน้า</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='stye.css') }}">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="app-header">
+      <h1>วิเคราะห์อารมณ์จากใบหน้า</h1>
+      <p class="subtitle">AI ตรวจจับอารมณ์จากสีหน้า ด้วย MediaPipe + DeepFace</p>
+    </header>
+
+    <!-- Tips banner -->
+    <div class="tips-banner">
+      <span class="tips-title">📌 เพื่อผลแม่นที่สุด:</span>
+      <span class="tip">✅ แสงสว่าง ไม่ย้อนแสง</span>
+      <span class="tip">✅ หน้าตรง มองกล้อง</span>
+      <span class="tip">✅ ระยะ 40–80 ซม.</span>
+      <span class="tip">❌ ไม่มีแว่น/ผ้าปิดหน้า</span>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="tabs">
+      <button class="tab active" id="tab-upload" onclick="switchTab('upload')">📁 อัปโหลดรูป</button>
+      <button class="tab" id="tab-camera" onclick="switchTab('camera')">📷 ใช้กล้อง</button>
+    </div>
+
+    <!-- ===== UPLOAD PANEL ===== -->
+    <div class="panel" id="panel-upload">
+      <div class="shot-mode-bar">
+        <span class="shot-label">โหมด:</span>
+        <button class="shot-btn active" id="btn-single" onclick="setShotMode(1)">รูปเดียว</button>
+        <button class="shot-btn" id="btn-multi"  onclick="setShotMode(3)">3 รูป (แม่นขึ้น)</button>
+        <span class="shot-hint" id="shot-hint">เลือกรูป 1 รูป</span>
+      </div>
+
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault()" ondrop="onDrop(event)">
+        <div class="drop-icon">🖼️</div>
+        <div class="drop-text">คลิกหรือลากรูปมาวางที่นี่</div>
+        <div class="drop-sub" id="drop-sub">รองรับ JPG, PNG, WEBP</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" multiple style="display:none"
+             onchange="onFilePick(event)">
+
+      <!-- Preview slots -->
+      <div class="preview-row" id="preview-row"></div>
+
+      <button class="analyze-btn" id="upload-btn" onclick="analyzeUpload()" disabled>
+        🔍 วิเคราะห์
+      </button>
+    </div>
+
+    <!-- ===== CAMERA PANEL ===== -->
+    <div class="panel hidden" id="panel-camera">
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas" style="display:none"></canvas>
+        <div class="camera-overlay" id="cam-overlay">
+          <span id="cam-status">กดปุ่มเปิดกล้องก่อน</span>
+        </div>
+      </div>
+
+      <div class="cam-thumbs" id="cam-thumbs"></div>
+
+      <div class="cam-controls">
+        <button class="cam-btn secondary" id="start-cam-btn" onclick="startCamera()">📷 เปิดกล้อง</button>
+        <button class="cam-btn primary" id="capture-btn" onclick="captureShots()" disabled>
+          ⏺ บันทึก 3 รูป
+        </button>
+        <button class="cam-btn danger" id="stop-cam-btn" onclick="stopCamera()" disabled>⏹ ปิดกล้อง</button>
+      </div>
+    </div>
+
+    <!-- ===== RESULT ===== -->
+    <div class="result-card hidden" id="result-card">
+
+      <!-- Quality warnings -->
+      <div class="quality-warn hidden" id="quality-warn"></div>
+
+      <!-- Low confidence warning -->
+      <div class="confidence-warn hidden" id="confidence-warn">
+        ⚠️ ความมั่นใจต่ำ — ลองถ่ายใหม่ในแสงสว่างกว่านี้
+      </div>
+
+      <!-- Main result -->
+      <div class="result-main">
+        <div class="emotion-emoji" id="res-emoji"></div>
+        <div class="emotion-name" id="res-name"></div>
+        <div class="confidence-bar-wrap">
+          <div class="confidence-bar" id="res-bar"></div>
+        </div>
+        <div class="confidence-label" id="res-conf-label"></div>
+      </div>
+
+      <!-- CNN note -->
+      <div class="cnn-note" id="cnn-note"></div>
+
+      <!-- Shot count note -->
+      <div class="shot-note" id="shot-note"></div>
+
+      <!-- All emotions -->
+      <div class="emotions-list" id="emotions-list"></div>
+
+      <!-- Blendshapes -->
+      <details class="detail-section">
+        <summary>ลักษณะเด่นบนใบหน้า</summary>
+        <div class="blendshapes-list" id="blendshapes-list"></div>
+      </details>
+
+      <!-- Feedback -->
+      <div class="feedback-section">
+        <div class="feedback-question">ผลถูกต้องมั้ย?</div>
+        <div class="feedback-btns">
+          <button class="fb-btn correct" onclick="sendFeedback(true)">✓ ถูก</button>
+          <button class="fb-btn wrong"   onclick="showFeedbackPicker()">✗ ผิด — เลือกอารมณ์ที่ถูก</button>
+        </div>
+        <div class="feedback-picker hidden" id="feedback-picker">
+          <div class="picker-title">อารมณ์จริงคือ:</div>
+          <div class="picker-emotions" id="picker-emotions"></div>
+        </div>
+        <div class="feedback-done hidden" id="feedback-done">ขอบคุณสำหรับ feedback! 🙏</div>
+      </div>
+
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading hidden" id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loading-text">กำลังวิเคราะห์...</div>
+    </div>
+
+  </div><!-- /app -->
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────────
+let shotMode    = 1;
+let pickedFiles = [];   // File[] from upload
+let camBlobs    = [];   // Blob[] from camera
+let camStream   = null;
+let lastResult  = null; // last API response
+
+const EMOTIONS = ["มีความสุข","เศร้า","โกรธ","กลัว","รังเกียจ","ประหลาดใจ","เฉยๆ"];
+const EMOJIS   = {
+  "มีความสุข":"😊","เศร้า":"😢","โกรธ":"😠",
+  "กลัว":"😨","รังเกียจ":"🤢","ประหลาดใจ":"😲","เฉยๆ":"😐"
+};
+const CERTAIN_LABELS = {
+  high:   "มั่นใจสูง ✅",
+  medium: "มั่นใจปานกลาง ⚠️",
+  low:    "ไม่แน่ใจ — ลองถ่ายใหม่ 🔄"
+};
+
+// ──────────────────────────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('tab-'   + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.remove('hidden');
+  hideResult();
+}
+
+// ──────────────────────────────────────────────────────────────
+// UPLOAD TAB
+// ──────────────────────────────────────────────────────────────
+function setShotMode(n) {
+  shotMode = n;
+  pickedFiles = [];
+  renderPreviews();
+  document.getElementById('btn-single').classList.toggle('active', n === 1);
+  document.getElementById('btn-multi').classList.toggle('active',  n === 3);
+  document.getElementById('shot-hint').textContent =
+    n === 1 ? 'เลือกรูป 1 รูป' : 'เลือก 2–3 รูป (ถ่ายท่าเดิมหลายครั้ง)';
+  document.getElementById('upload-btn').disabled = true;
+  hideResult();
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  addFiles(files);
+}
+
+function onFilePick(e) {
+  addFiles([...e.target.files]);
+  e.target.value = '';
+}
+
+function addFiles(files) {
+  if (shotMode === 1) {
+    pickedFiles = files.slice(0, 1);
+  } else {
+    pickedFiles = [...pickedFiles, ...files].slice(0, 3);
+  }
+  renderPreviews();
+  document.getElementById('upload-btn').disabled = pickedFiles.length === 0;
+  hideResult();
+}
+
+function removeFile(i) {
+  pickedFiles.splice(i, 1);
+  renderPreviews();
+  document.getElementById('upload-btn').disabled = pickedFiles.length === 0;
+}
+
+function renderPreviews() {
+  const row = document.getElementById('preview-row');
+  row.innerHTML = '';
+  pickedFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.className = 'preview-slot';
+    div.innerHTML = `
+      <img src="${url}" alt="รูป${i+1}">
+      <button class="rm-btn" onclick="removeFile(${i})">✕</button>
+      <span class="slot-label">รูป ${i+1}</span>`;
+    row.appendChild(div);
+  });
+}
+
+async function analyzeUpload() {
+  if (pickedFiles.length === 0) return;
+  showLoading('กำลังวิเคราะห์...');
+  try {
+    let result;
+    if (shotMode === 1 || pickedFiles.length === 1) {
+      const fd = new FormData();
+      fd.append('photo', pickedFiles[0]);
+      const res = await fetch('/api/data', { method: 'POST', body: fd });
+      result = await res.json();
+    } else {
+      const fd = new FormData();
+      pickedFiles.forEach((f, i) => fd.append(`photo${i + 1}`, f));
+      const res = await fetch('/api/multishot', { method: 'POST', body: fd });
+      result = await res.json();
+    }
+    hideLoading();
+    showResult(result);
+  } catch (err) {
+    hideLoading();
+    showError('เกิดข้อผิดพลาด: ' + err.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// CAMERA TAB
+// ──────────────────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    const video = document.getElementById('video');
+    video.srcObject = camStream;
+    setStatus('กล้องพร้อม — กดปุ่มบันทึก');
+    document.getElementById('capture-btn').disabled  = false;
+    document.getElementById('stop-cam-btn').disabled = false;
+    document.getElementById('start-cam-btn').disabled = true;
+  } catch (err) {
+    setStatus('ไม่สามารถเข้าถึงกล้อง: ' + err.message);
+  }
+}
+
+function stopCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  const video = document.getElementById('video');
+  video.srcObject = null;
+  setStatus('กดปุ่มเปิดกล้องก่อน');
+  document.getElementById('capture-btn').disabled   = true;
+  document.getElementById('stop-cam-btn').disabled  = true;
+  document.getElementById('start-cam-btn').disabled = false;
+}
+
+function setStatus(msg) { document.getElementById('cam-status').textContent = msg; }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function captureFrame() {
+  const video  = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+}
+
+async function captureShots() {
+  if (!camStream) return;
+  camBlobs = [];
+  document.getElementById('cam-thumbs').innerHTML = '';
+  document.getElementById('capture-btn').disabled = true;
+  hideResult();
+
+  for (let i = 0; i < 3; i++) {
+    setStatus(`กำลังบันทึก ${i + 1}/3...`);
+    await sleep(i === 0 ? 300 : 600);
+    const blob = await captureFrame();
+    camBlobs.push(blob);
+    addCamThumb(blob, i + 1);
+  }
+  setStatus('บันทึกครบ 3 รูป — กำลังวิเคราะห์...');
+  showLoading('กำลังวิเคราะห์...');
+
+  try {
+    const fd = new FormData();
+    camBlobs.forEach((b, i) => fd.append(`photo${i + 1}`, b, `frame${i + 1}.jpg`));
+    const res = await fetch('/api/multishot', { method: 'POST', body: fd });
+    const result = await res.json();
+    hideLoading();
+    setStatus('วิเคราะห์เสร็จ');
+    showResult(result);
+  } catch (err) {
+    hideLoading();
+    setStatus('เกิดข้อผิดพลาด');
+    showError(err.message);
+  }
+
+  document.getElementById('capture-btn').disabled = false;
+}
+
+function addCamThumb(blob, n) {
+  const url = URL.createObjectURL(blob);
+  const div = document.createElement('div');
+  div.className = 'preview-slot small';
+  div.innerHTML = `<img src="${url}" alt="frame${n}"><span class="slot-label">รูป ${n}</span>`;
+  document.getElementById('cam-thumbs').appendChild(div);
+}
+
+// ──────────────────────────────────────────────────────────────
+// RESULT DISPLAY
+// ──────────────────────────────────────────────────────────────
+function showResult(data) {
+  lastResult = data;
+  const card = document.getElementById('result-card');
+  card.classList.remove('hidden');
+
+  if (data.status !== 'success') {
+    renderError(data.message || 'เกิดข้อผิดพลาด');
+    return;
+  }
+
+  // Quality warnings
+  const qWarn = document.getElementById('quality-warn');
+  if (data.quality && data.quality.issues && data.quality.issues.length > 0) {
+    qWarn.innerHTML = data.quality.issues.map(i => `⚠️ ${i.msg}`).join('<br>');
+    qWarn.classList.remove('hidden');
+  } else {
+    qWarn.classList.add('hidden');
+  }
+
+  // Confidence warning
+  const cWarn = document.getElementById('confidence-warn');
+  if (data.certain_level === 'low') {
+    cWarn.classList.remove('hidden');
+  } else {
+    cWarn.classList.add('hidden');
+  }
+
+  // Main result
+  document.getElementById('res-emoji').textContent = data.emotion_emoji || EMOJIS[data.emotion] || '';
+  document.getElementById('res-name').textContent  = data.emotion;
+
+  const pct = Math.round((data.margin || 0) * 1000) / 10;
+  const bar = document.getElementById('res-bar');
+  bar.style.width = Math.min(100, pct * 4) + '%';
+  bar.className = 'confidence-bar level-' + (data.certain_level || 'low');
+
+  const levelLabel = CERTAIN_LABELS[data.certain_level] || '';
+  document.getElementById('res-conf-label').textContent =
+    `margin ${pct.toFixed(1)}% — ${levelLabel}`;
+
+  // CNN note
+  const cnn = data.cnn || {};
+  const cnnEl = document.getElementById('cnn-note');
+  if (cnn.available && cnn.emotion) {
+    const agreeIcon = cnn.agree ? '✅' : '⚡';
+    cnnEl.textContent = `${agreeIcon} DeepFace CNN: ${cnn.emotion_emoji || ''} ${cnn.emotion}`;
+    cnnEl.className = 'cnn-note ' + (cnn.agree ? 'agree' : 'disagree');
+    cnnEl.classList.remove('hidden');
+  } else {
+    cnnEl.classList.add('hidden');
+  }
+
+  // Shot count
+  const shotEl = document.getElementById('shot-note');
+  const shots = (data.quality || {}).shot_count || 1;
+  shotEl.textContent = shots > 1 ? `📸 เฉลี่ยจาก ${shots} รูป` : '';
+
+  // All emotions
+  const listEl = document.getElementById('emotions-list');
+  listEl.innerHTML = '';
+  Object.entries(data.emotions || {}).forEach(([em, prob]) => {
+    const isTop = em === data.emotion;
+    const p = Math.round(prob * 1000) / 10;
+    const div = document.createElement('div');
+    div.className = 'emotion-row' + (isTop ? ' top' : '');
+    div.innerHTML = `
+      <span class="em-emoji">${EMOJIS[em] || ''}</span>
+      <span class="em-name">${em}</span>
+      <div class="em-bar-wrap"><div class="em-bar" style="width:${p}%"></div></div>
+      <span class="em-pct">${p.toFixed(1)}%</span>`;
+    listEl.appendChild(div);
+  });
+
+  // Blendshapes
+  const bsEl = document.getElementById('blendshapes-list');
+  bsEl.innerHTML = '';
+  (data.blendshapes_top || []).forEach(b => {
+    const p = Math.round(b.score * 1000) / 10;
+    const div = document.createElement('div');
+    div.className = 'bs-row';
+    div.innerHTML = `
+      <span class="bs-name">${b.name}</span>
+      <div class="bs-bar-wrap"><div class="bs-bar" style="width:${p}%"></div></div>
+      <span class="bs-pct">${p.toFixed(1)}%</span>`;
+    bsEl.appendChild(div);
+  });
+
+  // Feedback reset
+  document.getElementById('feedback-done').classList.add('hidden');
+  document.getElementById('feedback-picker').classList.add('hidden');
+
+  // Populate picker
+  const pickerEl = document.getElementById('picker-emotions');
+  pickerEl.innerHTML = '';
+  EMOTIONS.forEach(em => {
+    if (em === data.emotion) return;
+    const btn = document.createElement('button');
+    btn.className = 'picker-btn';
+    btn.textContent = (EMOJIS[em] || '') + ' ' + em;
+    btn.onclick = () => sendFeedback(false, em);
+    pickerEl.appendChild(btn);
+  });
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderError(msg) {
+  document.getElementById('res-emoji').textContent = '❌';
+  document.getElementById('res-name').textContent  = msg;
+  document.getElementById('res-bar').style.width   = '0%';
+  document.getElementById('res-conf-label').textContent = '';
+  document.getElementById('emotions-list').innerHTML = '';
+  document.getElementById('blendshapes-list').innerHTML = '';
+  document.getElementById('cnn-note').classList.add('hidden');
+  document.getElementById('quality-warn').classList.add('hidden');
+  document.getElementById('confidence-warn').classList.add('hidden');
+}
+
+function hideResult() {
+  document.getElementById('result-card').classList.add('hidden');
+}
+
+// ──────────────────────────────────────────────────────────────
+// FEEDBACK
+// ──────────────────────────────────────────────────────────────
+function showFeedbackPicker() {
+  document.getElementById('feedback-picker').classList.remove('hidden');
+}
+
+async function sendFeedback(correct, actual) {
+  if (!lastResult) return;
+  const payload = {
+    predicted:      lastResult.emotion,
+    actual:         correct ? lastResult.emotion : actual,
+    margin:         lastResult.margin || 0,
+    blendshapes_raw: lastResult.blendshapes_raw || {},  // ครบ 52 ตัว English keys
+  };
+  try {
+    await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (_) {}
+  document.getElementById('feedback-picker').classList.add('hidden');
+  document.getElementById('feedback-done').classList.remove('hidden');
+}
+
+// ──────────────────────────────────────────────────────────────
+// LOADING / ERROR
+// ──────────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'กำลังวิเคราะห์...';
+  document.getElementById('loading').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.add('hidden');
+}
+function showError(msg) {
+  showResult({ status: 'error', message: msg });
+}
+</script>
+</body>
+</html>

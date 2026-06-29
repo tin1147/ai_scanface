@@ -1,0 +1,435 @@
+/* ─── Reset & Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f5f6fa;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+.hidden { display: none !important; }
+
+/* ─── App Shell ─── */
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 16px 80px;
+}
+
+/* ─── Header ─── */
+.app-header {
+  text-align: center;
+  padding: 24px 0 12px;
+}
+.app-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ─── Tips banner ─── */
+.tips-banner {
+  background: #e8f4fd;
+  border: 1px solid #b3d9f7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.tips-title { font-weight: 700; color: #1565c0; white-space: nowrap; }
+.tip { background: white; border-radius: 6px; padding: 2px 8px; border: 1px solid #cde; }
+
+/* ─── Tabs ─── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s;
+}
+.tab.active {
+  border-color: #4361ee;
+  background: #4361ee;
+  color: white;
+}
+
+/* ─── Panel ─── */
+.panel {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 14px;
+}
+
+/* ─── Shot mode bar ─── */
+.shot-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.shot-label { font-size: 0.82rem; color: #666; }
+.shot-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 2px solid #ddd;
+  background: white;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.shot-btn.active { border-color: #4361ee; background: #4361ee; color: white; }
+.shot-hint { font-size: 0.78rem; color: #999; margin-left: auto; }
+
+/* ─── Drop zone ─── */
+.drop-zone {
+  border: 2px dashed #c0c8e8;
+  border-radius: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8f9ff;
+}
+.drop-zone:hover { border-color: #4361ee; background: #eef0ff; }
+.drop-icon { font-size: 2.2rem; margin-bottom: 6px; }
+.drop-text { font-weight: 600; color: #333; margin-bottom: 4px; }
+.drop-sub { font-size: 0.78rem; color: #999; }
+
+/* ─── Preview slots ─── */
+.preview-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.preview-slot {
+  position: relative;
+  width: 110px;
+}
+.preview-slot.small { width: 80px; }
+.preview-slot img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #e0e4f0;
+  display: block;
+}
+.rm-btn {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 22px;
+  text-align: center;
+}
+.slot-label {
+  display: block;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #888;
+  margin-top: 3px;
+}
+
+/* ─── Analyze button ─── */
+.analyze-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  background: #4361ee;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.analyze-btn:hover:not(:disabled) { background: #3451d1; }
+.analyze-btn:disabled { background: #b0b8e0; cursor: not-allowed; }
+
+/* ─── Camera ─── */
+.camera-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  aspect-ratio: 4/3;
+  max-height: 320px;
+}
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror */
+}
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+#cam-status {
+  background: rgba(0,0,0,0.55);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+.cam-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.cam-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cam-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.cam-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cam-btn.secondary { background: #e8eaf6; color: #3451d1; }
+.cam-btn.primary   { background: #4361ee; color: white; }
+.cam-btn.danger    { background: #fde8e8; color: #c0392b; }
+
+/* ─── Result card ─── */
+.result-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+  margin-top: 4px;
+}
+
+/* ─── Quality & confidence warnings ─── */
+.quality-warn, .confidence-warn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.83rem;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.quality-warn    { background: #fff3cd; border: 1px solid #ffc107; color: #7d5a00; }
+.confidence-warn { background: #fde8e8; border: 1px solid #f5c6c6; color: #c0392b; }
+
+/* ─── Main result ─── */
+.result-main {
+  text-align: center;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid #f0f0f5;
+  margin-bottom: 14px;
+}
+.emotion-emoji {
+  font-size: 4rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.emotion-name {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+.confidence-bar-wrap {
+  height: 10px;
+  background: #e8eaf0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0 auto 8px;
+  max-width: 300px;
+}
+.confidence-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+.confidence-bar.level-high   { background: #22c55e; }
+.confidence-bar.level-medium { background: #f59e0b; }
+.confidence-bar.level-low    { background: #ef4444; }
+.confidence-label {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+/* ─── CNN note ─── */
+.cnn-note {
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  display: inline-block;
+  width: 100%;
+}
+.cnn-note.agree    { background: #e8faf0; color: #16a34a; }
+.cnn-note.disagree { background: #fff7e6; color: #b45309; }
+
+/* ─── Shot note ─── */
+.shot-note {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+/* ─── Emotion list ─── */
+.emotions-list { margin-bottom: 14px; }
+.emotion-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-radius: 6px;
+}
+.emotion-row.top {
+  background: #f0f3ff;
+  padding: 5px 8px;
+  margin: 0 -8px;
+  border-left: 3px solid #4361ee;
+}
+.em-emoji { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+.em-name  { width: 80px; font-size: 0.83rem; font-weight: 600; flex-shrink: 0; }
+.em-bar-wrap { flex: 1; height: 8px; background: #e8eaf0; border-radius: 4px; overflow: hidden; }
+.em-bar { height: 100%; background: #4361ee; border-radius: 4px; transition: width 0.4s; }
+.emotion-row.top .em-bar { background: #22c55e; }
+.em-pct { font-size: 0.78rem; color: #666; width: 38px; text-align: right; flex-shrink: 0; }
+
+/* ─── Detail section (blendshapes) ─── */
+.detail-section {
+  border: 1px solid #e8eaf0;
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: 14px;
+}
+.detail-section summary {
+  padding: 10px 14px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  list-style: none;
+  user-select: none;
+}
+.detail-section summary::after { content: ' ▾'; }
+.detail-section[open] summary::after { content: ' ▴'; }
+.blendshapes-list { padding: 4px 14px 12px; }
+.bs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.78rem;
+}
+.bs-name { width: 140px; color: #555; flex-shrink: 0; }
+.bs-bar-wrap { flex: 1; height: 6px; background: #e8eaf0; border-radius: 3px; overflow: hidden; }
+.bs-bar { height: 100%; background: #a5b4fc; border-radius: 3px; }
+.bs-pct { width: 36px; text-align: right; color: #888; flex-shrink: 0; }
+
+/* ─── Feedback ─── */
+.feedback-section {
+  border-top: 1px solid #f0f0f5;
+  padding-top: 14px;
+}
+.feedback-question {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 8px;
+}
+.feedback-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+.fb-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.fb-btn.correct { background: #e8faf0; color: #16a34a; border: 1px solid #bbf7d0; }
+.fb-btn.wrong   { background: #fde8e8; color: #c0392b; border: 1px solid #fecaca; }
+.feedback-picker { margin-top: 8px; }
+.picker-title { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
+.picker-emotions { display: flex; flex-wrap: wrap; gap: 6px; }
+.picker-btn {
+  padding: 6px 12px;
+  border: 1px solid #dde;
+  border-radius: 20px;
+  background: white;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.picker-btn:hover { border-color: #4361ee; background: #eef0ff; }
+.feedback-done {
+  font-size: 0.85rem;
+  color: #16a34a;
+  text-align: center;
+  padding: 8px;
+}
+
+/* ─── Loading overlay ─── */
+.loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 999;
+}
+.loading-spinner {
+  width: 44px; height: 44px;
+  border: 4px solid #e0e4f0;
+  border-top-color: #4361ee;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 0.95rem; color: #555; font-weight: 600; }
